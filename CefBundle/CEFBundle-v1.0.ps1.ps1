@@ -1,13 +1,15 @@
 param (
-    [string]$VesrsionParameter
+    [string]$VersionParameter
 )
 
-Write-Host "Version parameter $VesrsionParameter"
+if($VersionParameter.Length -gt 0){
+  $VersionForCEF = $VersionParameter.Substring(0, $VersionParameter.Length - 1)
+}
 
 
 $scriptFolder = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $downloadsFolder = Join-Path $scriptFolder "Downloads"
-$logFilePath = Join-Path $scriptFolder "testlog.txt"
+$logFilePath = Join-Path $scriptFolder "ceftestlog.txt"
 
 
 Start-Transcript -Path $logFilePath
@@ -15,14 +17,11 @@ Start-Transcript -Path $logFilePath
 $packageName = "cefsharp.winforms"
 
 
-
-
 if (!(Test-Path $downloadsFolder)) {
     New-Item -ItemType Directory -Path $downloadsFolder | Out-Null
 }
 
-
-function Download-Package {
+function Get-Package {
     param(
         [string]$Name  
     )
@@ -30,72 +29,88 @@ function Download-Package {
     $Name = $Name.ToLower();
 
     # $packageDownloadUrl = "https://www.nuget.org/api/v2/package/$Name"
-    # if(VesrsionParameter.)
-    $packageDownloadUrl = "https://www.nuget.org/api/v2/package/$Name/133.4.21"
-    $packageDownloadUrlForCef = "https://www.nuget.org/api/v2/package/$Name/133.4.2"
+    if($VersionParameter.Length -gt 0){
+        $packageDownloadUrl = "https://www.nuget.org/api/v2/package/$Name/$VersionParameter"
+        $packageDownloadUrlForCef = "https://www.nuget.org/api/v2/package/$Name/$VersionForCEF"
+    }else{
+      
 
-    $apiUrlNuget = "https://api.nuget.org/v3-flatcontainer/$Name/index.json"
+        $packageDownloadUrl = "https://www.nuget.org/api/v2/package/$Name"
+        $apiUrlNuget = "https://api.nuget.org/v3-flatcontainer/$Name/index.json"
+        $response = Invoke-RestMethod -Uri $apiUrlNuget
+        $latestVersion = $response.versions[-1]  
+        $VersionParameter=$latestVersion
+        
+    }
+    
 
-    $response = Invoke-RestMethod -Uri $apiUrlNuget
-    $latestVersion = $response.versions[-1]  
-    # $Version = $latestVersion
-    $Version="133.4.21";
 
-    # write-Host "Latest NuGet Version: $latestVersion"
+    # write-Host "Latest NuGet Version: $VersionParameter"
 
-    $destination = Join-Path $downloadsFolder "$Name.$Version.nupkg"
+    $destination = Join-Path $downloadsFolder "$Name.$VersionParameter.nupkg"
 
     if (!(Test-Path $destination)) {
 
         try {
 
             $webClient = New-Object System.Net.WebClient
+
+             write-Host "Downloading $Name with it's Version: $VersionParameter"
             
             try{
+
                $webClient.DownloadFile($packageDownloadUrl, $destination)
+
             }catch{
-                $webClient.DownloadFile($packageDownloadUrlForCef, $destination)
+                
+                try {
+                    $webClient.DownloadFile($packageDownloadUrlForCef, $destination)
+                }
+                catch{
+                    Write-Host "Wrong URL or version $($_.Exception.Message)"
+                    Exit 
+
+                }
+                
             }
-            write-Host "Downloading $Name with it's latest Version: $Version"
            
-            write-Host "Successfully downloaded $Name $Version"
+           
+            write-Host "Successfully downloaded $Name $VersionParameter"
             
 
     	    if ($Name -match "chromiumembeddedframework.runtime") {
-                $global:CefRunTimeVersion=$Version
+                $global:CefRunTimeVersion=$VersionParameter
                 return $true
             }
             if ($Name -match "cefsharp.common") {
-               
-               $global:CefsharpCommonVersion=$Version
+ 
+               $global:CefsharpCommonVersion=$VersionParameter
             }
             if ($Name -match "cefsharp.winforms") {
-               $global:CefsharpWinformsVersion=$Version
+               $global:CefsharpWinformsVersion=$VersionParameter
             }
              
             
 
             # use catalog url from meta data
-            $metadataUrl = "https://api.nuget.org/v3/registration5-gz-semver2/$Name/$Version.json"
+            $metadataUrl = "https://api.nuget.org/v3/registration5-gz-semver2/$Name/$VersionParameter.json"
 
 	        $response = Invoke-RestMethod -Uri $metadataUrl 
-            # Write-Host $response
-            # $response.catalogEntry
-
+           
             #$catalogEntryUrl = "https://api.nuget.org/v3/catalog0/data/2025.03.23.09.24.33/$($Name).$($Version).json"
 
             $catalogEntryUrl = $response.catalogEntry
 
-            write-Host "Checking Dependencies of $Name $latestVersion"
+            write-Host "Checking Dependencies of $Name $VersionParameter"
 
             $catalogData = Invoke-RestMethod -Uri $catalogEntryUrl
 
             $dependencyGroups = $catalogData.dependencyGroups
-            Process-Dependencies -DependencyGroups $dependencyGroups
+            Get-Dependencies -DependencyGroups $dependencyGroups
             
             return $true
         } catch {
-            Write-Host ":x: Failed to download: $Name ($Version)" 
+            Write-Host ":x: Failed to download: $Name ($VersionParameter)" 
             Write-Host "Error Message: $($_.Exception.Message)"
             Write-Host "Stack Trace: $($_.Exception.StackTrace)"
             return $false
@@ -107,7 +122,7 @@ function Download-Package {
 }
 
 
-function Process-Dependencies {
+function Get-Dependencies {
     param(
         [array]$DependencyGroups
     )
@@ -130,14 +145,8 @@ function Process-Dependencies {
                
                
                 try {
-                    $indexUrl = "https://api.nuget.org/v3-flatcontainer/$depName/index.json"
-                    $versions = (Invoke-RestMethod -Uri $indexUrl -ErrorAction Stop).versions
-
-                    if ($versions -contains $depVersion) {
-                        Download-Package -Name $depName | Out-Null
-                    } else {
-                        Write-Host "Version $depVersion not found for $depName. Available versions: $($versions -join ', ')"
-                    }
+                    Get-Package -Name $depName | Out-Null
+                    
                 } catch {
                     Write-Host " Error verifying $depName $($_.Exception.Message)" 
                 }
@@ -150,7 +159,7 @@ function Process-Dependencies {
     }
 }
 
-if (Download-Package -Name $packageName) {
+if (Get-Package -Name $packageName) {
    
 }
 
@@ -158,13 +167,7 @@ if (Download-Package -Name $packageName) {
 
 # Extraction binaries part
 
-# Write-Host "CefSharp.WinForms Version: $CefsharpWinformsVersion"
-# Write-Host "CefSharp.Common Version: $CefsharpCommonVersion"
-# Write-Host "ChromiumEmbeddedFramework Runtime Version: $CefRunTimeVersion"
 
-
-# $downloadsFolder = Join-Path $env:USERPROFILE "Downloads"
-# Write-Host "hi : $downloadsFolder"
 $destinationFolder = Join-Path $downloadsFolder "cef_extracted"
 $finalFolder = Join-Path $scriptFolder "cef"
 
@@ -178,8 +181,6 @@ $nupkgFiles = Get-ChildItem -Path $downloadsFolder -Filter "*.nupkg"
 if ($nupkgFiles.Count -eq 0) {
     Write-Host "No .nupkg files found in the Downloads folder."
     exit
-} else {
-    # Write-Host "Yes, .nupkg files found in the Downloads folder."
 }
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -200,7 +201,7 @@ foreach ($file in $nupkgFiles) {
     }
 }
 
-Write-Host "Creating a cef bundle.."
+Write-Host "Creating a cef bundle..."
 
 
 $subFoldersToCopy = @(
@@ -245,6 +246,8 @@ foreach ($file in $files) {
          Write-Host "Error copying $($file.FullName): $_"
      }
 }
+
+Write-Host "Creation of cef bundle completed"
 
 Remove-Item -Path $destinationFolder -Recurse -Force 
 Remove-Item -Path $downloadsFolder -Recurse -Force
