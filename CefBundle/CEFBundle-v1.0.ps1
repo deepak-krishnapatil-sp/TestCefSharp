@@ -145,6 +145,10 @@ function Get-Dependencies {
                
                
                 try {
+                    if ($depName -match "win-x86") {
+                        continue
+                    }
+
                     Get-Package -Name $depName | Out-Null
                     
                 } catch {
