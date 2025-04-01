@@ -3,13 +3,14 @@ param (
 )
 
 if($VersionParameter.Length -gt 0){
+  $VersionParameter = $VersionParameter.Trim()
   $VersionForCEF = $VersionParameter.Substring(0, $VersionParameter.Length - 1)
 }
 
 
 $scriptFolder = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$downloadsFolder = Join-Path $scriptFolder "Downloads"
-$logFilePath = Join-Path $scriptFolder "ceftestlog.txt"
+$downloadsFolder = Join-Path $scriptFolder "temp"
+$logFilePath = Join-Path $scriptFolder "cefbundle-Transcript.log"
 
 
 Start-Transcript -Path $logFilePath
@@ -43,7 +44,6 @@ function Get-Package {
         
     }
     
-
 
     # write-Host "Latest NuGet Version: $VersionParameter"
 
@@ -91,7 +91,6 @@ function Get-Package {
             }
              
             
-
             # use catalog url from meta data
             $metadataUrl = "https://api.nuget.org/v3/registration5-gz-semver2/$Name/$VersionParameter.json"
 
@@ -166,7 +165,6 @@ function Get-Dependencies {
 if (Get-Package -Name $packageName) {
    
 }
-
 
 
 # Extraction binaries part
