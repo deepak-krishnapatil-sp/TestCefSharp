@@ -6,9 +6,11 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
+using CefSharpIntegration;
 
 namespace TestCefSharp.WinForms
 {
+
 
     public static class Globals
     {
@@ -55,46 +57,20 @@ namespace TestCefSharp.WinForms
 
     public static class CefSharpResultCode
     {
-        // Hardcoded values from CefSharp.Enums.ResultCode
         public const int NormalExitProcessNotified = 266;
     }
 
     public static class Program
     {
-        private static Assembly cefSharpCoreAssembly;
-        private static Assembly cefSharpWinFormsAssembly;
+        
+        private static CefSharpHelper cefSharpManager;
+
 
         public static string GetCefVersion()
         {
             try
             {
-                if (cefSharpCoreAssembly == null)
-                {
-                    string cefDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cef");
-                    cefSharpCoreAssembly = Assembly.LoadFrom(Path.Combine(cefDir, "CefSharp.Core.dll"));
-                    throw new InvalidOperationException("CEF assembly not loaded. Call InitializeCef first.");
-                }
-
-                Type cefType = cefSharpCoreAssembly.GetType("CefSharp.Cef");
-
-                // Get version properties
-                PropertyInfo chromiumVersionProperty = cefType.GetProperty("ChromiumVersion", BindingFlags.Public | BindingFlags.Static);
-                PropertyInfo cefVersionProperty = cefType.GetProperty("CefVersion", BindingFlags.Public | BindingFlags.Static);
-                PropertyInfo cefSharpVersionProperty = cefType.GetProperty("CefSharpVersion", BindingFlags.Public | BindingFlags.Static);
-
-                if (chromiumVersionProperty == null || cefVersionProperty == null || cefSharpVersionProperty == null)
-                {
-                    return "Version information unavailable.";
-                }
-
-                string chromiumVersion = (string)chromiumVersionProperty.GetValue(null);
-                string cefVersionTmp = (string)cefVersionProperty.GetValue(null);
-                string cefVersion = cefVersionTmp.Substring(0, cefVersionTmp.IndexOf("+"));  // Get the substring from the start to the position of '+'
-                string cefSharpVersion = (string)cefSharpVersionProperty.GetValue(null);
-
-                // Format the version string
-                return string.Format("Chromium: {0}, CEF: {1}, CefSharp: {2}",
-                    chromiumVersion, cefVersion, cefSharpVersion);
+                return cefSharpManager.GetCefVersions();
             }
             catch (Exception ex)
             {
@@ -107,13 +83,9 @@ namespace TestCefSharp.WinForms
         {
             try
             {
-                //Init Globals
                 Globals.InitializeGlobals(args);
 
-                // Load assemblies
-
-                cefSharpCoreAssembly = Assembly.LoadFrom(Path.Combine(Globals.CefDirPath, "CefSharp.Core.dll"));
-                cefSharpWinFormsAssembly = Assembly.LoadFrom(Path.Combine(Globals.CefDirPath, "CefSharp.WinForms.dll"));
+                cefSharpManager = new CefSharpHelper(Globals.CefDirPath);
 
                 Logger.Info("Loaded assembly {0}", Globals.CefDirPath + "CefSharp.Core.dll");
                 Logger.Info("Loaded assembly {0}", Globals.CefDirPath + "CefSharp.WinForms.dll");
@@ -126,16 +98,8 @@ namespace TestCefSharp.WinForms
             subscribeMethod.Invoke(null, new object[] {""});
 #endif
 
-                Type cefSettingsType = cefSharpWinFormsAssembly.GetType("CefSharp.WinForms.CefSettings");
-                if (cefSettingsType == null)
-                {
-                    Logger.Error("CefSettings type not found in CefSharp.WinForms.dll.");
-                    throw new Exception("CefSettings type not found in CefSharp.WinForms.dll.");
-                }
 
-                object cefSettings = Activator.CreateInstance(cefSettingsType);
-                cefSettingsType.GetProperty("CachePath")?.SetValue(cefSettings, Globals.CefCacheFolderPath);
-                Logger.Info("Cef Cache Path {0}", Globals.CefCacheFolderPath);
+                var cefSettings = cefSharpManager.CreateCefSettings(Globals.CefCacheFolderPath);
 
 
                 //Example of setting a command line argument
@@ -145,43 +109,18 @@ namespace TestCefSharp.WinForms
                 //
                 //NOTE: WebRTC Device Id's aren't persisted as they are in Chrome see https://bitbucket.org/chromiumembedded/cef/issues/2064/persist-webrtc-deviceids-across-restart
                 // Access CefCommandLineArgs property
-                PropertyInfo commandLineArgsProperty = cefSettingsType.GetProperty("CefCommandLineArgs");
-                object commandLineArgs = commandLineArgsProperty.GetValue(cefSettings);
 
-                // Get the type of CefCommandLineArgs (it's an IDictionary<string, string>)
-                Type commandLineArgsType = commandLineArgs.GetType();
-                MethodInfo addMethod = commandLineArgsType.GetMethod("Add", new[] { typeof(string), typeof(string) });
+                cefSharpManager.AddCommandLineArgs(cefSettings, "enable-media-stream");
+                cefSharpManager.AddCommandLineArgs(cefSettings, "use-fake-ui-for-media-stream");
+                cefSharpManager.AddCommandLineArgs(cefSettings, "enable-usermedia-screen-capturing");
+       
 
-                // Add "enable-media-stream" (no value needed, just the switch)
-                addMethod.Invoke(commandLineArgs, new object[] { "enable-media-stream", null });
-
-                //https://peter.sh/experiments/chromium-command-line-switches/#use-fake-ui-for-media-stream
-                addMethod.Invoke(commandLineArgs, new object[] { "use-fake-ui-for-media-stream", null });
-
-                //For screen sharing add (see https://bitbucket.org/chromiumembedded/cef/issues/2582/allow-run-time-handling-of-media-access#comment-58677180)
-                addMethod.Invoke(commandLineArgs, new object[] { "enable-usermedia-screen-capturing", null });
-
-
-                // Proceed with CEF initialization
-                Type cefType = cefSharpCoreAssembly.GetType("CefSharp.Cef");
-
-                MethodInfo initializeMethod = cefType.GetMethod("Initialize", new[] { cefSettingsType });
-
-                //Perform dependency check to make sure all relevant resources are in our output directory.
-                bool success = (bool)initializeMethod.Invoke(null, new object[] { cefSettings });
+                bool success = cefSharpManager.initializeCef(cefSettings);
 
                 if (!success)
                 {
-                    // Get the exit code after initialization failure
-                    MethodInfo getExitCodeMethod = cefType.GetMethod("GetExitCode", BindingFlags.Public | BindingFlags.Static);
-                    if (getExitCodeMethod == null)
-                    {
-                        Logger.Error("Cef.Initialize failed and GetExitCode method not found.");
-                        MessageBox.Show("Cef.Initialize failed and GetExitCode method not found.", "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return 0;
-                    }
 
-                    int exitCode = (int)getExitCodeMethod.Invoke(null, null);
+                    int exitCode=cefSharpManager.getExitCode();
 
 
                     if (exitCode == CefSharpResultCode.NormalExitProcessNotified)
