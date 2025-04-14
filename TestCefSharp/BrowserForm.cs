@@ -2,19 +2,17 @@
 //
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-using TestCefSharp.WinForms.Controls;
 using System;
-using System.Windows.Forms;
+using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Reflection;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
-using System.Diagnostics;
-using System.Security.Policy;
 using System.Text.Json;
-using System.Net.Http;
 using System.Text.Json.Serialization;
-using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using TestCefSharp.WinForms.Controls;
 
 namespace TestCefSharp.WinForms
 {
@@ -95,22 +93,16 @@ namespace TestCefSharp.WinForms
                 MessageBox.Show("IsBrowserInitializedChanged event not found.", "Event Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
-            EventInfo jsMessageEvent = browserType.GetEvent("JavascriptMessageReceived");
-
-            if (jsMessageEvent == null)
-            {
-                Debug.WriteLine("Error: JavascriptMessageReceived event not found!");
-                //Logger.Error("JavascriptMessageReceived event not found!");
-                return;
-            }
-            AddEventHandler("LoadError", "CefSharp.LoadErrorEventArgs", nameof(OnBrowserLoadError));
-            AddEventHandler("TitleChanged", "CefSharp.TitleChangedEventArgs", nameof(OnBrowserTitleChanged));
-            AddEventHandler("StatusMessage", "CefSharp.StatusMessageEventArgs", nameof(OnBrowserStatusMessage));
-            AddEventHandler("ConsoleMessage", "CefSharp.ConsoleMessageEventArgs", nameof(OnBrowserConsoleMessage));
-            AddEventHandler("AddressChanged", "CefSharp.AddressChangedEventArgs", nameof(OnBrowserAddressChanged));
+            AddEventHandler("LoadError",           "CefSharp.LoadErrorEventArgs",           nameof(OnBrowserLoadError));
+            AddEventHandler("TitleChanged",        "CefSharp.TitleChangedEventArgs",        nameof( OnBrowserTitleChanged));
+            AddEventHandler("StatusMessage",       "CefSharp.StatusMessageEventArgs",       nameof(OnBrowserStatusMessage));
+            AddEventHandler("ConsoleMessage",      "CefSharp.ConsoleMessageEventArgs",      nameof(OnBrowserConsoleMessage));
+            AddEventHandler("AddressChanged",      "CefSharp.AddressChangedEventArgs",      nameof(OnBrowserAddressChanged));
             AddEventHandler("LoadingStateChanged", "CefSharp.LoadingStateChangedEventArgs", nameof(OnLoadingStateChanged));
-            AddEventHandler("FrameLoadEnd", "CefSharp.FrameLoadEndEventArgs", nameof(OnFrameLoadEnd));
-            AddEventHandler("JavascriptMessageReceived", "CefSharp.JavascriptMessageReceivedEventArgs", nameof(OnWebMessageReceived));
+
+
+            AddEventHandler("FrameLoadEnd",         "CefSharp.FrameLoadEndEventArgs",       nameof(OnFrameLoadEnd));
+            AddEventHandler("JavascriptMessageReceived", "CefSharp.JavascriptMessageReceivedEventArgs", nameof(OnJavascriptMessageReceived));
 
         }
         private void ExitMenuItemClick(object sender, EventArgs e)
@@ -142,9 +134,8 @@ namespace TestCefSharp.WinForms
         {
             MethodInfo focusMethod = browserType.GetMethod("Focus");
             this.InvokeOnUiThreadIfRequired(() => focusMethod.Invoke(browser, null));
-            PropertyInfo isBrowserInitializedProperty = browserType.GetProperty("IsBrowserInitialized");
-
         }
+
         private void OnBrowserLoadError(object sender, object args)
         {
             try
@@ -329,7 +320,74 @@ namespace TestCefSharp.WinForms
             }
 
         }
-        private void OnWebMessageReceived(object sender, object args)
+
+        private async void OnFrameLoadEnd(object sender, object args)
+        {
+            generatedNonce = generateNonce();
+            Logger.Info($"Generated Nonce: {generatedNonce}");
+
+            string nonceScript = $@"
+            (function() {{
+                let nonceElement = document.getElementById('dpr-pw-nonce');
+                if (nonceElement) {{
+                    nonceElement.value = '{generatedNonce}';
+                    nonceElement.dispatchEvent(new Event('click'));
+                }}
+            }})();";
+
+            bool isnonce = await ExecuteJavaScript(nonceScript);
+            if (isnonce)
+            {
+                Logger.Info("Nonce Injected Successfully!");
+            }
+            else
+            {
+                Logger.Info("Failed to Inject Nonce");
+            }
+
+            string successScript = @"
+            (function() {
+                const targetId = 'dpr-pw-success';
+                let lastContent = '';
+
+                const sendIfChanged = () => {
+                    const el = document.getElementById(targetId);
+                    if (el) {
+                        const content = el.innerText || el.value || '';
+                        if (content && content !== lastContent) {
+                            lastContent = content;
+                            CefSharp.PostMessage(content);
+                        }
+                    }
+                };
+
+                const observer = new MutationObserver(() => {
+                    sendIfChanged();
+                });
+
+                const startObserver = () => {
+                    const body = document.body;
+                    if (body) {
+                        observer.observe(body, {
+                            childList: true,
+                            subtree: true,
+                            characterData: true
+                        });
+                    }
+                };
+
+                // Run initially in case element already exists
+                setInterval(sendIfChanged, 1000);
+
+                // Start observing for DOM changes
+                startObserver();
+            })();
+            ";
+
+            await ExecuteJavaScript(successScript);
+        }
+
+        private void OnJavascriptMessageReceived(object sender, object args)
         {
             try
             {
@@ -361,7 +419,101 @@ namespace TestCefSharp.WinForms
             }
             catch (Exception ex)
             {
-                Logger.Error("Exception in OnWebMessageReceived: " + ex.ToString());
+                Logger.Error("Exception in OnJavascriptMessageReceived: " + ex.ToString());
+            }
+        }
+
+        private string generateNonce()
+        {
+            byte[] nonceBytes = new byte[16];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(nonceBytes);
+            }
+            return BitConverter.ToString(nonceBytes).Replace("-", "").ToLower();
+        }
+        private async Task<bool> ExecuteJavaScript(string script)
+        {
+            try
+            {
+                PropertyInfo browserCoreProperty = browserType.GetProperty("BrowserCore");
+                if (browserCoreProperty == null)
+                {
+                    Logger.Error("BrowserCore property not found on ChromiumWebBrowser.");
+                    return false;
+                }
+
+                object iBrowserInstance = browserCoreProperty.GetValue(browser);
+                if (iBrowserInstance == null)
+                {
+                    Logger.Error("Failed to get IBrowser instance from BrowserCore.");
+                    return false;
+                }
+
+                PropertyInfo mainFrameProperty = iBrowserInstance.GetType().GetProperty("MainFrame");
+                if (mainFrameProperty == null)
+                {
+                    Logger.Error("MainFrame property not found in IBrowser.");
+                    return false;
+                }
+
+                object iFrameInstance = mainFrameProperty.GetValue(iBrowserInstance);
+                if (iFrameInstance == null)
+                {
+                    Logger.Error("Failed to get IFrame instance.");
+                    return false;
+                }
+
+
+                MethodInfo evaluateScriptAsync = iFrameInstance.GetType().GetMethod(
+                    "EvaluateScriptAsync",
+                    new[]
+                    {
+                        typeof(string),        // script
+                        typeof(string),        // scriptUrl
+                        typeof(int),           // startLine
+                        typeof(TimeSpan?),     // timeout
+                        typeof(bool)           // useImmediatelyInvokedFunc
+                            
+                    });
+
+                if (evaluateScriptAsync == null)
+                {
+                    Logger.Error("EvaluateScriptAsync(string, string, int, TimeSpan?, bool) method not found in IFrame.");
+                    return false;
+                }
+
+                object task = evaluateScriptAsync.Invoke(iFrameInstance, new object[]
+                {
+                    script,
+                    "about:blank",               // scriptUrl (dummy)
+                    0,                           // startLine
+                    TimeSpan.FromSeconds(5),     // timeout
+                    true                         // useImmediatelyInvokedFunc
+                });
+
+                if (task is Task responseTask)
+                {
+                    await responseTask.ConfigureAwait(false);
+
+                    Type taskType = responseTask.GetType();
+                    if (taskType.IsGenericType && taskType.GetGenericTypeDefinition() == typeof(Task<>))
+                    {
+                        PropertyInfo resultProperty = taskType.GetProperty("Result");
+                        object result = resultProperty?.GetValue(responseTask);
+
+                        return true;
+                    }
+
+                    return true; // Non-generic Task completed fine
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error executing JavaScript: {ex.Message}");
+                return false;
             }
         }
 
@@ -428,200 +580,8 @@ namespace TestCefSharp.WinForms
             return false;
         }
 
-
-        private string generateNonce()
-        {
-            byte[] nonceBytes = new byte[16];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(nonceBytes);
-            }
-            return BitConverter.ToString(nonceBytes).Replace("-", "").ToLower();
-        }
-        private async void OnFrameLoadEnd(object sender, object args)
-        {
-            generatedNonce = generateNonce();
-            Logger.Info($"Generated Nonce: {generatedNonce}");
-
-            string nonceScript = $@"
-            (function() {{
-                let nonceElement = document.getElementById('dpr-pw-nonce');
-                if (nonceElement) {{
-                    nonceElement.value = '{generatedNonce}';
-                    nonceElement.dispatchEvent(new Event('click'));
-                }}
-            }})();";
-            bool isnonce = await ExecuteJavaScript(nonceScript);
-            if (isnonce)
-            {
-                Logger.Info("Nonce Injected Successfully!");
-            }
-            else
-            {
-                Logger.Info("Failed to Inject Nonce");
-            }
-            string successScript = @"
-            (function() {
-                const targetId = 'dpr-pw-success';
-                let lastContent = '';
-
-                const sendIfChanged = () => {
-                    const el = document.getElementById(targetId);
-                    if (el) {
-                        const content = el.innerText || el.value || '';
-                        if (content && content !== lastContent) {
-                            lastContent = content;
-                            CefSharp.PostMessage(content);
-                        }
-                    }
-                };
-
-                const observer = new MutationObserver(() => {
-                    sendIfChanged();
-                });
-
-                const startObserver = () => {
-                    const body = document.body;
-                    if (body) {
-                        observer.observe(body, {
-                            childList: true,
-                            subtree: true,
-                            characterData: true
-                        });
-                    }
-                };
-
-                // Run initially in case element already exists
-                setInterval(sendIfChanged, 1000);
-
-                // Start observing for DOM changes
-                startObserver();
-            })();
-            ";
-            await ExecuteJavaScript(successScript);
-
-        }
-
-
-        private async Task<bool> ExecuteJavaScript(string script)
-        {
-            try
-            {
-                PropertyInfo browserCoreProperty = browserType.GetProperty("BrowserCore");
-                if (browserCoreProperty == null)
-                {
-                    Logger.Error("BrowserCore property not found on ChromiumWebBrowser.");
-                    return false;
-                }
-
-                object iBrowserInstance = browserCoreProperty.GetValue(browser);
-                if (iBrowserInstance == null)
-                {
-                    Logger.Error("Failed to get IBrowser instance from BrowserCore.");
-                    return false;
-                }
-
-                PropertyInfo mainFrameProperty = iBrowserInstance.GetType().GetProperty("MainFrame");
-                if (mainFrameProperty == null)
-                {
-                    Logger.Error("MainFrame property not found in IBrowser.");
-                    return false;
-                }
-
-                object iFrameInstance = mainFrameProperty.GetValue(iBrowserInstance);
-                if (iFrameInstance == null)
-                {
-                    Logger.Error("Failed to get IFrame instance.");
-                    return false;
-                }
-
-
-                MethodInfo evaluateScriptAsync = iFrameInstance.GetType().GetMethod(
-                    "EvaluateScriptAsync",
-                    new[]
-                    {
-                        typeof(string),        // script
-                        typeof(string),        // scriptUrl
-                        typeof(int),           // startLine
-                        typeof(TimeSpan?),     // timeout
-                        typeof(bool)           // useImmediatelyInvokedFunc
-                            
-                    });
-
-                if (evaluateScriptAsync == null)
-                {
-                    Logger.Error("EvaluateScriptAsync(string, string, int, TimeSpan?, bool) method not found in IFrame.");
-                    return false;
-                }
-
-                object task = evaluateScriptAsync.Invoke(iFrameInstance, new object[]
-                {
-                    script,
-                    "about:blank",               // scriptUrl (dummy)
-                    0,                           // startLine
-                    TimeSpan.FromSeconds(5),    // timeout
-                    true                         // useImmediatelyInvokedFunc
-                });
-
-                if (task is Task responseTask)
-                {
-                    await responseTask.ConfigureAwait(false);
-
-                    Type taskType = responseTask.GetType();
-                    if (taskType.IsGenericType && taskType.GetGenericTypeDefinition() == typeof(Task<>))
-                    {
-                        PropertyInfo resultProperty = taskType.GetProperty("Result");
-                        object result = resultProperty?.GetValue(responseTask);
-
-                        return true;
-                    }
-
-                    return true; // Non-generic Task completed fine
-                }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Logger.Error($"Error executing JavaScript: {ex.Message}");
-                return false;
-            }
-        }
-        private void CefSharpWebMessageReceivedHandler(object sender, EventArgs args)
-        {
-            try
-            {
-                // Use reflection to get the 'WebMessageAsJson' property from the args
-                PropertyInfo jsonProp = args.GetType().GetProperty("WebMessageAsJson");
-                if (jsonProp == null)
-                {
-                    Logger.Error("WebMessageAsJson property not found on event args.");
-                    return;
-                }
-
-                string jsonData = jsonProp.GetValue(args)?.ToString();
-
-                if (string.IsNullOrEmpty(jsonData))
-                {
-                    Logger.Error("Received empty WebMessageAsJson.");
-                    return;
-                }
-
-                // Debug: Log when success data is received
-                Debug.WriteLine($"Received success data: {jsonData}");
-                Logger.Info($"Received success data: {jsonData}");
-
-                ProcessSuccessData(jsonData); // This can be the same method you already use
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Error handling CefSharp WebMessage: " + ex.Message);
-                Logger.Error("Error handling CefSharp WebMessage: " + ex.Message);
-            }
-        }
-
-
     }
+
     class SuccessData
     {
         [JsonPropertyName("password")]
@@ -633,6 +593,7 @@ namespace TestCefSharp.WinForms
         [JsonPropertyName("verificationUrl")]
         public string VerificationUrl { get; set; }
     }
+
     class VerificationResponse
     {
         [JsonPropertyName("nonce")]
