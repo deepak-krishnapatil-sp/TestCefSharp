@@ -69,7 +69,7 @@ namespace TestCefSharp.WinForms
                 {
                     loadMethod.Invoke(browser, new object[] { urlToLoad });
                 }
-                else
+                else 
                 {
                     Logger.Error("ChromiumWebBrowser: Neither Load method nor Address property found.");
                     MessageBox.Show("Neither Load method nor Address property found.", "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -123,6 +123,7 @@ namespace TestCefSharp.WinForms
             shutdownMethod.Invoke(null, null);
             Close();
         }
+
         private void ShowDevToolsMenuItemClick(object sender, EventArgs e)
         {
             try
@@ -136,6 +137,7 @@ namespace TestCefSharp.WinForms
                 MessageBox.Show($"Error handling ShowDevTools: {ex.Message}", "Event Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
         private void OnIsBrowserInitializedChanged(object sender, EventArgs e)
         {
             MethodInfo focusMethod = browserType.GetMethod("Focus");
@@ -204,6 +206,7 @@ namespace TestCefSharp.WinForms
                 MessageBox.Show($"Error handling LoadError: {ex.Message}", "Event Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
         private void OnBrowserTitleChanged(object sender, object args)
         {
             try
@@ -221,6 +224,7 @@ namespace TestCefSharp.WinForms
                 MessageBox.Show($"Error handling OnBrowserTitleChanged: {ex.Message}", "Event Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
         private void OnBrowserStatusMessage(object sender, object args)
         {
             try
@@ -237,6 +241,7 @@ namespace TestCefSharp.WinForms
                 MessageBox.Show($"Error handling StatusMessage: {ex.Message}", "Event Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
         private void OnBrowserConsoleMessage(object sender, object args)
         {
             try
@@ -258,6 +263,7 @@ namespace TestCefSharp.WinForms
                 MessageBox.Show($"Error handling ConsoleMessage: {ex.Message}", "Event Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
         private void OnBrowserAddressChanged(object sender, object args)
         {
             try
@@ -276,6 +282,7 @@ namespace TestCefSharp.WinForms
                 MessageBox.Show($"Error handling AddressChanged: {ex.Message}", "Event Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
         private void OnLoadingStateChanged(object sender, object args)
         {
             try
@@ -301,7 +308,6 @@ namespace TestCefSharp.WinForms
 
         private void AddEventHandler(string eventName, string eventArgsTypeStr, string eventHandlerFuncName)
         {
-            //Logger.Info("AddEventHandler method");
             //browser.AddressChanged += OnBrowserAddressChanged;
             EventInfo eventInfo = browserType.GetEvent(eventName);
             if (eventInfo != null)
