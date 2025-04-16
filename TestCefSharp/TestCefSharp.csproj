@@ -26,6 +26,8 @@
     <Compile Remove="bin\**" />
     <Compile Remove="obj.netcore\**" />
     <Compile Remove="obj\**" />
+
+
     <EmbeddedResource Remove="bin.netcore\**" />
     <EmbeddedResource Remove="bin\**" />
     <EmbeddedResource Remove="obj.netcore\**" />
@@ -45,6 +47,9 @@
   <ItemGroup>
     <Reference Include="CefSharpHelper">
       <HintPath>\CefSharpHelper.dll</HintPath>
+    </Reference>
+    <Reference Include="TestClassLibraryHelper">
+      <HintPath>..\TestClassLibraryHelper\bin\Debug\TestClassLibraryHelper.dll</HintPath>
     </Reference>
   </ItemGroup>
 

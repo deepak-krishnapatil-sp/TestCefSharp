@@ -53,14 +53,14 @@
             // 
             this.toolStripContainer.ContentPanel.Controls.Add(this.statusLabel);
             this.toolStripContainer.ContentPanel.Controls.Add(this.outputLabel);
-            this.toolStripContainer.ContentPanel.Size = new System.Drawing.Size(739, 524);
+            this.toolStripContainer.ContentPanel.Size = new System.Drawing.Size(739, 532);
             this.toolStripContainer.ContentPanel.Load += new System.EventHandler(this.toolStripContainer_ContentPanel_Load);
             this.toolStripContainer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.toolStripContainer.LeftToolStripPanelVisible = false;
-            this.toolStripContainer.Location = new System.Drawing.Point(0, 30);
+            this.toolStripContainer.Location = new System.Drawing.Point(0, 28);
             this.toolStripContainer.Name = "toolStripContainer";
             this.toolStripContainer.RightToolStripPanelVisible = false;
-            this.toolStripContainer.Size = new System.Drawing.Size(739, 555);
+            this.toolStripContainer.Size = new System.Drawing.Size(739, 557);
             this.toolStripContainer.TabIndex = 2;
             this.toolStripContainer.Text = "toolStripContainer1";
             // 
@@ -71,7 +71,7 @@
             // statusLabel
             // 
             this.statusLabel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.statusLabel.Location = new System.Drawing.Point(0, 498);
+            this.statusLabel.Location = new System.Drawing.Point(0, 506);
             this.statusLabel.Name = "statusLabel";
             this.statusLabel.Size = new System.Drawing.Size(739, 13);
             this.statusLabel.TabIndex = 1;
@@ -79,7 +79,7 @@
             // outputLabel
             // 
             this.outputLabel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.outputLabel.Location = new System.Drawing.Point(0, 511);
+            this.outputLabel.Location = new System.Drawing.Point(0, 519);
             this.outputLabel.Name = "outputLabel";
             this.outputLabel.Size = new System.Drawing.Size(739, 13);
             this.outputLabel.TabIndex = 0;
@@ -95,14 +95,14 @@
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Padding = new System.Windows.Forms.Padding(0);
-            this.toolStrip1.Size = new System.Drawing.Size(739, 31);
+            this.toolStrip1.Size = new System.Drawing.Size(739, 25);
             this.toolStrip1.Stretch = true;
             this.toolStrip1.TabIndex = 0;
             // 
             // toolStripLabel1
             // 
             this.toolStripLabel1.Name = "toolStripLabel1";
-            this.toolStripLabel1.Size = new System.Drawing.Size(62, 28);
+            this.toolStripLabel1.Size = new System.Drawing.Size(62, 22);
             this.toolStripLabel1.Text = "Address";
             // 
             // urlTextBox
@@ -119,7 +119,7 @@
             this.fileToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(739, 30);
+            this.menuStrip1.Size = new System.Drawing.Size(739, 28);
             this.menuStrip1.TabIndex = 3;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -129,7 +129,7 @@
             this.showDevToolsToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(46, 26);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(46, 24);
             this.fileToolStripMenuItem.Text = "File";
             // 
             // showDevToolsToolStripMenuItem

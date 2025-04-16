@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using CefSharpIntegration;
 
+
 namespace TestCefSharp.WinForms
 {
     public partial class BrowserForm : Form
@@ -24,6 +25,7 @@ namespace TestCefSharp.WinForms
         {
 
             InitializeComponent();
+  
             
             title += Program.GetCefVersion();
             this.Text = title;
