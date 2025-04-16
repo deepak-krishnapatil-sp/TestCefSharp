@@ -2,7 +2,7 @@
 //
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-using TestCefSharp.WinForms.Controls;
+using SPCefSharp.WinForms.Controls;
 using System;
 using System.Net;
 using System.Windows.Forms;
@@ -10,7 +10,7 @@ using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
 
-namespace TestCefSharp.WinForms
+namespace SPCefSharp.WinForms
 {
     public partial class BrowserForm : Form
     {
