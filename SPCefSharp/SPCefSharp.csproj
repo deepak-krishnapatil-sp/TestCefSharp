@@ -43,6 +43,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.Text.Json" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SPCEFSharpLib\SPCEFSharpLib.csproj" />
     <ProjectReference Include="..\SPLoggerLib\SPLoggerLib.csproj" />
   </ItemGroup>
