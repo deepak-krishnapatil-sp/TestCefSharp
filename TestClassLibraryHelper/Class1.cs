@@ -318,6 +318,65 @@ namespace CefSharpIntegration
             }
         }
 
+        public void OnBrowserLoadError(object sender, object args)
+        {
+            try
+            {
+                Type loadErrorEventArgsType = cefSharpAssembly.GetType("CefSharp.LoadErrorEventArgs");
+                PropertyInfo errorCodeProperty = loadErrorEventArgsType.GetProperty("ErrorCode");
+                PropertyInfo errorTextProperty = loadErrorEventArgsType.GetProperty("ErrorText");
+                PropertyInfo failedUrlProperty = loadErrorEventArgsType.GetProperty("FailedUrl");
+
+                object errorCode = errorCodeProperty.GetValue(args); // Enum CefErrorCode
+                string errorText = (string)errorTextProperty.GetValue(args);
+                string failedUrl = (string)failedUrlProperty.GetValue(args);
+
+                // Get CefErrorCode enum type and Aborted value
+                Type cefErrorCodeType = cefSharpWinFormsAssembly.GetType("CefSharp.CefErrorCode");
+                object abortedValue = Enum.Parse(cefErrorCodeType, "Aborted");
+                int abortedCode = (int)abortedValue;
+                //Actions that trigger a download will raise an aborted error.
+                //Aborted is generally safe to ignore
+                if ((int)errorCode == abortedCode)
+                {
+                    return;
+                }
+
+                // PropertyInfo BrowserProperty = loadErrorEventArgsType.GetProperty("Browser");
+
+                var errorHtml = string.Format("<html><body><h2>Failed to load URL {0} with error {1} ({2}).</h2></body></html>",
+                                  failedUrl, errorText, errorCode);
+
+                // Get ChromiumWebBrowser type and SetMainFrameDocumentContentAsync method
+                Type browserType = cefSharpWinFormsAssembly.GetType("CefSharp.WinForms.ChromiumWebBrowser");
+                MethodInfo setContentMethod = browserType.GetMethod("SetMainFrameDocumentContentAsync", new[] { typeof(string) });
+
+                if (setContentMethod != null)
+                {
+                    // Invoke the method (returns a Task)
+                    object task = setContentMethod.Invoke(browser, new object[] { errorHtml });
+
+                    // Since this is async, wait for it to complete (blocking call for simplicity)
+                    Type taskType = task.GetType();
+                    MethodInfo getAwaiterMethod = taskType.GetMethod("GetAwaiter");
+                    object awaiter = getAwaiterMethod.Invoke(task, null);
+                    MethodInfo getResultMethod = awaiter.GetType().GetMethod("GetResult");
+                    getResultMethod.Invoke(awaiter, null); // Blocks until the task completes
+                }
+                else
+                {
+                    MessageBox.Show("SetMainFrameDocumentContentAsync method not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+
+                //AddressChanged isn't called for failed Urls so we need to manually update the Url TextBox
+                //this.InvokeOnUiThreadIfRequired(() => urlTextBox.Text = failedUrl);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error handling LoadError: {ex.Message}", "Event Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         public void Dispose()
         {
             try

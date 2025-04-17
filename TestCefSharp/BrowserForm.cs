@@ -42,12 +42,12 @@ namespace TestCefSharp.WinForms
             browserType = browser.GetType();
 
 
-            AddEventHandler("IsBrowserInitializedChanged", "OnIsBrowserInitializedChanged");
-            AddEventHandler("AddressChanged", "OnBrowserAddressChanged");
-            AddEventHandler("TitleChanged", "OnBrowserTitleChanged");
-            AddEventHandler("LoadingStateChanged", "OnLoadingStateChanged");
-            AddEventHandler("StatusMessage", "OnBrowserStatusMessage");
-            AddEventHandler("ConsoleMessage", "OnBrowserConsoleMessage");
+            //AddEventHandler("IsBrowserInitializedChanged", "OnIsBrowserInitializedChanged");
+            //AddEventHandler("AddressChanged", "OnBrowserAddressChanged");
+            //AddEventHandler("TitleChanged", "OnBrowserTitleChanged");
+            //AddEventHandler("LoadingStateChanged", "OnLoadingStateChanged");
+            //AddEventHandler("StatusMessage", "OnBrowserStatusMessage");
+            //AddEventHandler("ConsoleMessage", "OnBrowserConsoleMessage");
             
 
             if (browser != null)
@@ -62,6 +62,13 @@ namespace TestCefSharp.WinForms
             cefSharpManager.BrowserAddressChanged += UpdateUrlTextBox;
             cefSharpManager.TitleChanged += ChangeTitle;
 
+            AddEventHandler("IsBrowserInitializedChanged", "OnIsBrowserInitializedChanged");
+            AddEventHandler("AddressChanged", "OnBrowserAddressChanged");
+            AddEventHandler("TitleChanged", "OnBrowserTitleChanged");
+            AddEventHandler("LoadingStateChanged", "OnLoadingStateChanged");
+            AddEventHandler("StatusMessage", "OnBrowserStatusMessage");
+            AddEventHandler("ConsoleMessage", "OnBrowserConsoleMessage");
+            AddEventHandler("LoadError", "OnBrowserLoadError");
 
             Logger.Info("Created ChromiumWebBrowser Instance successfully");
 
@@ -160,6 +167,10 @@ namespace TestCefSharp.WinForms
            cefSharpManager.OnBrowserConsoleMessage(sender, args);
         }
 
+        private void OnBrowserLoadError(object sender, object args)
+        {
+            cefSharpManager.OnBrowserLoadError(sender, args);
+        }
 
         private void ExitMenuItemClick(object sender, EventArgs e)
         {
