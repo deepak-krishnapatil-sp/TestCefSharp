@@ -1,4 +1,4 @@
-﻿namespace TestCefSharp.WinForms
+﻿namespace SPCefSharp.WinForms
 {
     partial class BrowserForm
     {

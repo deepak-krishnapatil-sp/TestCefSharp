@@ -2,6 +2,7 @@
 //
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
+using SPCefSharp.WinForms.Controls;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -12,18 +13,19 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using TestCefSharp.WinForms.Controls;
 
-namespace TestCefSharp.WinForms
+
+namespace SPCefSharp.WinForms
 {
     public partial class BrowserForm : Form
     {
         private string title = "CEF DynamicLoading : ";
-        private string urlToLoad = "https://src-onboarding.identitysoon.com/r/default/flow-selection";
+        private string urlToLoad = "https://www.google.com";
+        // private string urlToLoad = "https://src-onboarding.identitysoon.com/r/default/flow-selection";
+        private string generatedNonce;
 
         Type browserType;       //ChromiumWebBrowser
         private object browser; //ChromiumWebBrowser Object
-        private string generatedNonce;
 
         private Assembly cefSharpAssembly;
         private Assembly cefSharpWinFormsAssembly;
@@ -296,7 +298,7 @@ namespace TestCefSharp.WinForms
 
             await ExecuteJavaScript(successScript);
         }
-        
+
         private void OnJavascriptMessageReceived(object sender, object args)
         {
             try
@@ -332,7 +334,7 @@ namespace TestCefSharp.WinForms
                 Logger.Error("Exception in OnJavascriptMessageReceived: " + ex.ToString());
             }
         }
-        
+
         private void AddEventHandler(string eventName, string eventArgsTypeStr, string eventHandlerFuncName)
         {
             //browser.AddressChanged += OnBrowserAddressChanged;

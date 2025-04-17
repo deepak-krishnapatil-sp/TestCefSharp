@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace TestCefSharp.WinForms
+namespace SPCefSharp.WinForms
 {
     public enum LogSeverity
     {
@@ -25,7 +25,7 @@ namespace TestCefSharp.WinForms
                 Directory.CreateDirectory(dir);
             }
             // Clear the log file on startup and write initial message
-            File.WriteAllText(LogFilePath, $"TestCefSharp started at {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n");
+            File.WriteAllText(LogFilePath, $"SPCefSharp started at {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n");
         }
 
         private static void Log(LogSeverity severity, string format, params object[] args)

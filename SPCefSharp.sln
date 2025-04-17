@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35825.156
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPCefSharp", "SPCefSharp\SPCefSharp.csproj", "{1D1D63D1-5257-4AA0-A284-7EF4574878CB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPLoggerLib", "SPLoggerLib\SPLoggerLib.csproj", "{CB9B4A87-881A-4364-B100-289F90B573B4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPCEFSharpLib", "SPCEFSharpLib\SPCEFSharpLib.csproj", "{DEC14B74-30DB-4F30-B291-1B89F8649372}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1D1D63D1-5257-4AA0-A284-7EF4574878CB}.Debug|x64.ActiveCfg = Debug|x64
+		{1D1D63D1-5257-4AA0-A284-7EF4574878CB}.Debug|x64.Build.0 = Debug|x64
+		{1D1D63D1-5257-4AA0-A284-7EF4574878CB}.Release|x64.ActiveCfg = Release|x64
+		{1D1D63D1-5257-4AA0-A284-7EF4574878CB}.Release|x64.Build.0 = Release|x64
+		{CB9B4A87-881A-4364-B100-289F90B573B4}.Debug|x64.ActiveCfg = Debug|x64
+		{CB9B4A87-881A-4364-B100-289F90B573B4}.Debug|x64.Build.0 = Debug|x64
+		{CB9B4A87-881A-4364-B100-289F90B573B4}.Release|x64.ActiveCfg = Release|x64
+		{CB9B4A87-881A-4364-B100-289F90B573B4}.Release|x64.Build.0 = Release|x64
+		{DEC14B74-30DB-4F30-B291-1B89F8649372}.Debug|x64.ActiveCfg = Debug|x64
+		{DEC14B74-30DB-4F30-B291-1B89F8649372}.Debug|x64.Build.0 = Debug|x64
+		{DEC14B74-30DB-4F30-B291-1B89F8649372}.Release|x64.ActiveCfg = Release|x64
+		{DEC14B74-30DB-4F30-B291-1B89F8649372}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EE0CDE0A-B27C-48DB-A3B7-E6105563F170}
+	EndGlobalSection
+EndGlobal

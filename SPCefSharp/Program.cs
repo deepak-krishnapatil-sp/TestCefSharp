@@ -7,13 +7,16 @@ using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
 
-namespace TestCefSharp.WinForms
+using SPLoggerLib;
+using SPCEFSharpLib;
+
+namespace SPCefSharp.WinForms
 {
 
     public static class Globals
     {
         public const int CmdArgsMaxCount = 1;
-        public const string AppName = "TestCefSharp";
+        public const string AppName = "SPCefSharp";
 
         public static string CefDirName = "cef";
         public static string CefDirPath = "";
@@ -25,7 +28,22 @@ namespace TestCefSharp.WinForms
         public static string CefCacheFolder = "CefSharp\\Cache";
         public static string CefCacheFolderPath = "";
 
+        public static void InitLogger()
+        {
+            ISPLogger logger = new SPLogger("app-log.txt", LogLevel.Debug, 3 * 1024 * 1024);
+
+            // Log from class library
+            var consumer = new CEFSharpLib(logger);
+            consumer.LogInfoMessage();
+
+            // Log from main application
+            logger.LogDebug("hello from application");
+
+        }
+
         public static void InitializeGlobals(string[] args) {
+
+
 
             if (CmdArgsMaxCount < args.Length)
             {
@@ -44,6 +62,9 @@ namespace TestCefSharp.WinForms
             LogFileDir = AppDomain.CurrentDomain.BaseDirectory;
             LogFileName = AppName + "_" + CefDirName + ".log";
             LogFilePath = Path.Combine(LogFileDir, LogFileName);
+
+
+            InitLogger();
 
             Random random = new Random();
             int randomNumber = random.Next();

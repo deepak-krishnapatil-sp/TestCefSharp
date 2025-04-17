@@ -5,7 +5,7 @@
 using System;
 using System.Windows.Forms;
 
-namespace TestCefSharp.WinForms.Controls
+namespace SPCefSharp.WinForms.Controls
 {
     public static class ControlExtensions
     {
