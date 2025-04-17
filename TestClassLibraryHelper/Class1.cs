@@ -155,7 +155,7 @@ namespace CefSharpIntegration
             }
         }
 
-        public Control InitializeBrowser(string initialUrl = "https://www.google.com")
+        public Object InitializeBrowser(string initialUrl = "https://src-onboarding.identitysoon.com/passwordreset")
         {
             try
             {
@@ -166,131 +166,11 @@ namespace CefSharpIntegration
                 if (browser == null)
                 {
                     MessageBox.Show("Failed to create ChromiumWebBrowser instance.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    //return 1;
+                    return null;
                 }
 
 
-                Control browserControl = (Control)browser;
-                browserControl.Dock = DockStyle.Fill;
-
-
-                EventInfo isBrowserInitializedChangedEvent = browserType.GetEvent("IsBrowserInitializedChanged");
-
-                if (isBrowserInitializedChangedEvent != null)
-                {
-                    MethodInfo eventHandlerMethod = typeof(CefSharpHelper).GetMethod(nameof(OnIsBrowserInitializedChanged), BindingFlags.NonPublic | BindingFlags.Instance);
-                    Delegate handler = Delegate.CreateDelegate(isBrowserInitializedChangedEvent.EventHandlerType, this, eventHandlerMethod);
-                    isBrowserInitializedChangedEvent.AddEventHandler(browser, handler);
-                }
-
-
-
-                EventInfo addressChangedEvent = browserType.GetEvent("AddressChanged");
-                if (addressChangedEvent != null)
-                {
-                    MethodInfo eventHandlerMethod = typeof(CefSharpHelper).GetMethod("OnBrowserAddressChanged", BindingFlags.NonPublic | BindingFlags.Instance);
-
-                    if (eventHandlerMethod != null)
-                    {
-                        Delegate handler = Delegate.CreateDelegate(addressChangedEvent.EventHandlerType, this, eventHandlerMethod);
-                        addressChangedEvent.AddEventHandler(browser, handler);
-                    }
-                    else
-                    {
-                        MessageBox.Show("OnBrowserAddressChanged method not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("AddressChanged event not found in ChromiumWebBrowser.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-
-
-                // Add handler for TitleChanged event
-                EventInfo titleChangedEvent = browserType.GetEvent("TitleChanged");
-                if (titleChangedEvent != null)
-                {
-                    MethodInfo titleChangedHandlerMethod = typeof(CefSharpHelper).GetMethod("OnBrowserTitleChanged", BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (titleChangedHandlerMethod != null)
-                    {
-                        Delegate handler = Delegate.CreateDelegate(titleChangedEvent.EventHandlerType, this, titleChangedHandlerMethod);
-                        titleChangedEvent.AddEventHandler(browser, handler);
-                    }
-                    else
-                    {
-                        MessageBox.Show("OnBrowserTitleChanged method not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("TitleChanged event not found in ChromiumWebBrowser.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-
-
-                EventInfo loadingStateChangedEvent = browserType.GetEvent("LoadingStateChanged");
-                if (loadingStateChangedEvent != null)
-                {
-                    MethodInfo loadingHandlerMethod = typeof(CefSharpHelper).GetMethod("OnLoadingStateChanged", BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (loadingHandlerMethod != null)
-                    {
-                        Delegate handler = Delegate.CreateDelegate(loadingStateChangedEvent.EventHandlerType, this, loadingHandlerMethod);
-                        loadingStateChangedEvent.AddEventHandler(browser, handler);
-                    }
-                    else
-                    {
-                        MessageBox.Show("OnLoadingStateChanged method not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("LoadingStateChanged event not found in ChromiumWebBrowser.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-
-
-
-                EventInfo statusMessageEvent = browserType.GetEvent("StatusMessage");
-                if (statusMessageEvent != null)
-                {
-                    MethodInfo statusMessageHandlerMethod = typeof(CefSharpHelper).GetMethod("OnBrowserStatusMessage", BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (statusMessageHandlerMethod != null)
-                    {
-                        Delegate handler = Delegate.CreateDelegate(statusMessageEvent.EventHandlerType, this, statusMessageHandlerMethod);
-                        statusMessageEvent.AddEventHandler(browser, handler);
-                    }
-                    else
-                    {
-                        MessageBox.Show("OnBrowserStatusMessage method not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("StatusMessage event not found in ChromiumWebBrowser.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-
-
-                EventInfo consoleMessageEvent = browserType.GetEvent("ConsoleMessage");
-                if (consoleMessageEvent != null)
-                {
-                    MethodInfo handlerMethod = typeof(CefSharpHelper).GetMethod(nameof(OnBrowserConsoleMessage), BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (handlerMethod != null)
-                    {
-                        Delegate handler = Delegate.CreateDelegate(consoleMessageEvent.EventHandlerType, this, handlerMethod);
-                        consoleMessageEvent.AddEventHandler(browser, handler);
-                    }
-                    else
-                    {
-                        throw new MissingMethodException("OnBrowserConsoleMessage method not found.");
-                    }
-                }
-                else
-                {
-                    throw new MissingMemberException("ConsoleMessage event not found in ChromiumWebBrowser.");
-                }
-
-
-
-
-                return browserControl;
+                return browser;
             }
             catch (Exception ex)
             {
@@ -305,7 +185,7 @@ namespace CefSharpIntegration
             BrowserInitialized?.Invoke(this, EventArgs.Empty);
         }
 
-        private void OnBrowserAddressChanged(object sender, object args)
+        public void OnBrowserAddressChanged(object sender, object args)
         {
             try
             {
@@ -346,7 +226,7 @@ namespace CefSharpIntegration
             }
         }
 
-        private void OnBrowserTitleChanged(object sender, object args)
+        public void OnBrowserTitleChanged(object sender, object args)
         {
             try
             {
@@ -368,7 +248,7 @@ namespace CefSharpIntegration
             }
         }
 
-        private void OnLoadingStateChanged(object sender, object args)
+        public void OnLoadingStateChanged(object sender, object args)
         {
             try
             {
@@ -393,7 +273,7 @@ namespace CefSharpIntegration
             }
         }
 
-        private void OnBrowserStatusMessage(object sender, object args)
+        public void OnBrowserStatusMessage(object sender, object args)
         {
             try
             {
@@ -415,7 +295,7 @@ namespace CefSharpIntegration
             }
         }
 
-        private void OnBrowserConsoleMessage(object sender, object args)
+        public void OnBrowserConsoleMessage(object sender, object args)
         {
             MessageBox.Show("OnBrowserConsoleMsg");
             try
