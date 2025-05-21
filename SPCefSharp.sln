@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPLoggerLib", "SPLoggerLib\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPCEFSharpLib", "SPCEFSharpLib\SPCEFSharpLib.csproj", "{DEC14B74-30DB-4F30-B291-1B89F8649372}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPLoggerLibTests", "SPLoggerLibTests\SPLoggerLibTests.csproj", "{02A3AF81-7597-D04A-7001-DDC3E3F7CFA6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -27,6 +29,10 @@ Global
 		{DEC14B74-30DB-4F30-B291-1B89F8649372}.Debug|x64.Build.0 = Debug|x64
 		{DEC14B74-30DB-4F30-B291-1B89F8649372}.Release|x64.ActiveCfg = Release|x64
 		{DEC14B74-30DB-4F30-B291-1B89F8649372}.Release|x64.Build.0 = Release|x64
+		{02A3AF81-7597-D04A-7001-DDC3E3F7CFA6}.Debug|x64.ActiveCfg = Debug|x64
+		{02A3AF81-7597-D04A-7001-DDC3E3F7CFA6}.Debug|x64.Build.0 = Debug|x64
+		{02A3AF81-7597-D04A-7001-DDC3E3F7CFA6}.Release|x64.ActiveCfg = Release|x64
+		{02A3AF81-7597-D04A-7001-DDC3E3F7CFA6}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
