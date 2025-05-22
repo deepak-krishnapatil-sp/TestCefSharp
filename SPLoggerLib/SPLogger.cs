@@ -61,7 +61,8 @@ namespace SPLoggerLib
                 {
                     // Rename the current log file to include a timestamp
                     File.Move(_logFilePath, backupFilePath);
-                    Console.WriteLine($"Log file rotated. Old log file moved to: {backupFilePath}");
+                    string logEntry = string.Format($"Log file rotated. Old log file moved to: {backupFilePath}");
+                    File.AppendAllText(_logFilePath, logEntry, Encoding.UTF8);
                 }
                 catch (Exception ex)
                 {
@@ -88,7 +89,7 @@ namespace SPLoggerLib
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"Logging failed: {ex.Message}");
+                Console.Error.WriteLine($"Log entry failed: {ex.Message}");
             }
         }
 
