@@ -49,7 +49,7 @@ namespace SPCefSharp.WinForms
 
 
             // Log from class library
-            var consumer = new CEFSharpLib(Logger.GetLoggerObject());
+            var consumer = new CEFSharpLib(Logger.GetLoggerObject(), CefDirPath);
             consumer.LogInfoMessage();
         }
 
