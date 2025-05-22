@@ -81,8 +81,8 @@ namespace SPCefSharp.WinForms
 
     public static class Program
     {
-        private static Assembly cefSharpCoreAssembly;
-        private static Assembly cefSharpWinFormsAssembly;
+        private static Assembly? cefSharpCoreAssembly;
+        private static Assembly? cefSharpWinFormsAssembly;
 
         public static string GetCefVersion()
         {
@@ -225,7 +225,8 @@ namespace SPCefSharp.WinForms
                 }
 
                 Application.EnableVisualStyles();
-                Application.Run(new BrowserForm());                
+                var brwoserObject = BrowserForm.GetBrowserFormObject();
+                Application.Run(brwoserObject);                
             }
             catch (FileNotFoundException ex)
             {

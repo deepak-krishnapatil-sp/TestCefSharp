@@ -22,16 +22,16 @@ namespace SPCefSharp.WinForms
         private string title = "CEF DynamicLoading : ";
         private string urlToLoad = "https://www.google.com";
         // private string urlToLoad = "https://src-onboarding.identitysoon.com/r/default/flow-selection";
-        private string generatedNonce;
+        private string generatedNonce = string.Empty;
 
-        Type browserType;       //ChromiumWebBrowser
-        private object browser; //ChromiumWebBrowser Object
+        Type? browserType = null;       //ChromiumWebBrowser
+        private object? browser;        //ChromiumWebBrowser Object
 
-        private Assembly cefSharpAssembly;
-        private Assembly cefSharpWinFormsAssembly;
-        private Assembly cefSharpCoreAssembly;
+        private Assembly? cefSharpAssembly;
+        private Assembly? cefSharpWinFormsAssembly;
+        private Assembly? cefSharpCoreAssembly;
 
-        public BrowserForm()
+        private BrowserForm()
         {
             InitializeComponent();
 
@@ -39,7 +39,21 @@ namespace SPCefSharp.WinForms
             this.Text = title;
             WindowState = FormWindowState.Normal;
 
+        }
 
+        public static BrowserForm GetBrowserFormObject()
+        { 
+            var browserObject = new BrowserForm();
+
+            browserObject.InitChromiumWebBrowserObject();
+            browserObject.SetBrowserAddressProperty();
+            browserObject.SetBrowserEventHandlers();
+
+            return browserObject;
+        }
+
+        private void InitChromiumWebBrowserObject()
+        {
             // Load CefSharp.WinForms assembly
             cefSharpWinFormsAssembly = Assembly.LoadFrom(Path.Combine(Globals.CefDirPath, "CefSharp.WinForms.dll"));
             cefSharpCoreAssembly = Assembly.LoadFrom(Path.Combine(Globals.CefDirPath, "CefSharp.Core.dll"));
@@ -53,7 +67,10 @@ namespace SPCefSharp.WinForms
             toolStripContainer.ContentPanel.Controls.Add(browserControl);
 
             Logger.Info("Created ChromiumWebBrowser Instance successfully");
+        }
 
+        private void SetBrowserAddressProperty()
+        {
             // Try setting Address property
             PropertyInfo addressProperty = browserType.GetProperty("Address");
 
@@ -69,14 +86,17 @@ namespace SPCefSharp.WinForms
                 {
                     loadMethod.Invoke(browser, new object[] { urlToLoad });
                 }
-                else 
+                else
                 {
                     Logger.Error("ChromiumWebBrowser: Neither Load method nor Address property found.");
                     MessageBox.Show("Neither Load method nor Address property found.", "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
             }
+        }
 
+        private void SetBrowserEventHandlers()
+        {
             EventInfo isBrowserInitializedChangedEvent = browserType.GetEvent("IsBrowserInitializedChanged");
             if (isBrowserInitializedChangedEvent != null)
             {
@@ -310,7 +330,7 @@ namespace SPCefSharp.WinForms
                 PropertyInfo messageProp = argsType.GetProperty("Message");
 
                 // Get the Message value
-                object messageValue = messageProp.GetValue(args);
+                object? messageValue = messageProp.GetValue(args);
                 if (messageValue == null)
                 {
                     Debug.WriteLine("Message value is null.");
@@ -523,21 +543,21 @@ namespace SPCefSharp.WinForms
     class SuccessData
     {
         [JsonPropertyName("password")]
-        public string Password { get; set; }
+        public string Password { get; set; } = string.Empty;
 
         [JsonPropertyName("username")]
-        public string Username { get; set; }
+        public string Username { get; set; } = string.Empty;
 
         [JsonPropertyName("verificationUrl")]
-        public string VerificationUrl { get; set; }
+        public string VerificationUrl { get; set; } = string.Empty;
     }
 
     class VerificationResponse
     {
         [JsonPropertyName("nonce")]
-        public string Nonce { get; set; }
+        public string Nonce { get; set; } = string.Empty;
 
         [JsonPropertyName("status")]
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
     }
 }
