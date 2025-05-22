@@ -30,13 +30,18 @@ namespace SPLoggerLib
 
     public class SPLogger : ISPLogger
     {
+        private const string defaultFilePath = "debug.log";
+        private const ISPLogger.LogLevel defaultLogLevel = ISPLogger.LogLevel.Debug;
+        private const long defaultMaxFileSize = 1024 * 1024; // 1MB
+
         private readonly string _logFilePath;
         private readonly ISPLogger.LogLevel _minLogLevel;
         private readonly long _maxFileSize;
-        //private readonly bool LogToConsole = false; // Toggle for console output
+
+        // private readonly bool LogToConsole = false; // Toggle for console output
 
         // Constructor with optional parameters, including max file size for log rotation
-        public SPLogger(string logFilePath = "debuglog.log", ISPLogger.LogLevel minLogLevel = ISPLogger.LogLevel.Trace, long maxFileSize = 3 * 1024 * 1024) // 3 MB
+        public SPLogger(string logFilePath = defaultFilePath, ISPLogger.LogLevel minLogLevel = defaultLogLevel, long maxFileSize = defaultMaxFileSize)
         {
             _logFilePath = logFilePath;
             _minLogLevel = minLogLevel;
@@ -46,7 +51,8 @@ namespace SPLoggerLib
         // Method to rotate log file if it exceeds the max file size
         private void RotateLogFile()
         {
-            if (File.Exists(_logFilePath) && new FileInfo(_logFilePath).Length >= _maxFileSize)
+            FileInfo logFileInfo = new FileInfo(_logFilePath);
+            if (logFileInfo.Exists && logFileInfo.Length >= _maxFileSize)
             {
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                 string backupFilePath = $"{_logFilePath}_{timestamp}";

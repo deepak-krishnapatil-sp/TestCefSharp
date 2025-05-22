@@ -17,15 +17,75 @@ namespace SPLoggerLib.Tests
         }
 
         [Fact]
+        public void Logs_Fatal_Message()
+        {
+            // Act
+            _logger.Fatal("Test message {0}", "FATAL");
+
+            // Assert
+            var content = File.ReadAllText(_tempLogFile);
+            Assert.Contains("[Fatal]", content);
+            Assert.Contains("Test message FATAL", content);
+        }
+
+        [Fact]
+        public void Logs_Error_Message()
+        {
+            // Act
+            _logger.Error("Test message {0}", "ERROR");
+
+            // Assert
+            var content = File.ReadAllText(_tempLogFile);
+            Assert.Contains("[Error]", content);
+            Assert.Contains("Test message ERROR", content);
+        }
+
+        [Fact]
+        public void Logs_Warn_Message()
+        {
+            // Act
+            _logger.Warn("Test message {0}", "WARNING");
+
+            // Assert
+            var content = File.ReadAllText(_tempLogFile);
+            Assert.Contains("[Warn]", content);
+            Assert.Contains("Test message WARNING", content);
+        }
+
+        [Fact]
         public void Logs_Info_Message()
         {
             // Act
-            _logger.Info("Test message {0}", 123);
+            _logger.Info("Test message {0}", "INFO");
 
             // Assert
             var content = File.ReadAllText(_tempLogFile);
             Assert.Contains("[Info]", content);
-            Assert.Contains("Test message 123", content);
+            Assert.Contains("Test message INFO", content);
+        }
+
+        [Fact]
+        public void Logs_Debug_Message()
+        {
+            // Act
+            _logger.Debug("Test message {0}", "DEBUG");
+
+            // Assert
+            var content = File.ReadAllText(_tempLogFile);
+            Assert.Contains("[Debug]", content);
+            Assert.Contains("Test message DEBUG", content);
+        }
+
+        [Fact]
+        public void Logs_Trace_Message()
+        {
+            // Act
+            _logger.Trace("Test message {0}", "TRACE");
+
+            // Assert
+            var content = File.ReadAllText(_tempLogFile);
+            Assert.Contains("[Trace]", content);
+            Assert.Contains("Test message TRACE", content);
         }
 
         [Fact]
@@ -42,7 +102,7 @@ namespace SPLoggerLib.Tests
         public void LogFile_Rotates_When_Too_Large()
         {
             // Fill up log file just below limit
-            File.WriteAllText(_tempLogFile, new string('x', 1024 * 1024 - 10));
+            File.WriteAllText(_tempLogFile, new string('x', 1024 * 1024 + 10));
 
             // This should trigger rotation
             _logger.Info("Trigger rotation");
