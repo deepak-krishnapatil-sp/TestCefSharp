@@ -13,14 +13,14 @@ namespace SPLoggerLib.Tests
         public SPLoggerTests()
         {
             _tempLogFile = Path.GetTempFileName();
-            _logger = new SPLogger(_tempLogFile, LogLevel.Trace, maxFileSize: 1024 * 1024);
+            _logger = new SPLogger(_tempLogFile, ISPLogger.LogLevel.Trace, maxFileSize: 1024 * 1024);
         }
 
         [Fact]
         public void Logs_Info_Message()
         {
             // Act
-            _logger.LogInfo("Test message {0}", 123);
+            _logger.Info("Test message {0}", 123);
 
             // Assert
             var content = File.ReadAllText(_tempLogFile);
@@ -31,8 +31,8 @@ namespace SPLoggerLib.Tests
         [Fact]
         public void Does_Not_Log_Below_Min_Level()
         {
-            var strictLogger = new SPLogger(_tempLogFile, LogLevel.Warn);
-            strictLogger.LogDebug("This should not appear");
+            var strictLogger = new SPLogger(_tempLogFile, ISPLogger.LogLevel.Warn);
+            strictLogger.Debug("This should not appear");
 
             var content = File.ReadAllText(_tempLogFile);
             Assert.DoesNotContain("Debug", content);
@@ -45,7 +45,7 @@ namespace SPLoggerLib.Tests
             File.WriteAllText(_tempLogFile, new string('x', 1024 * 1024 - 10));
 
             // This should trigger rotation
-            _logger.LogInfo("Trigger rotation");
+            _logger.Info("Trigger rotation");
 
             // Check that original file is reset or moved
             Assert.True(File.Exists(_tempLogFile));

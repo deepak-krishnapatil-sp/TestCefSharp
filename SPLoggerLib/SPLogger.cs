@@ -6,34 +6,37 @@ using System.Text;
 
 namespace SPLoggerLib
 {
-    public enum LogLevel
-    {
-        Fatal,
-        Error,
-        Warn,
-        Info,
-        Debug,
-        Trace
-    }
+
     public interface ISPLogger
     {
-        void Log(string message, LogLevel level, params object[] args);
-        void LogFatal(string message, params object[] args);
-        void LogError(string message, params object[] args);
-        void LogWarn(string message, params object[] args);
-        void LogInfo(string message, params object[] args);
-        void LogDebug(string message, params object[] args);
-        void LogTrace(string message, params object[] args);
+        public enum LogLevel
+        {
+            Fatal,
+            Error,
+            Warn,
+            Info,
+            Debug,
+            Trace
+        }
+
+        void Log(LogLevel level, string message, params object[] args);
+        void Fatal(string message, params object[] args);
+        void Error(string message, params object[] args);
+        void Warn(string message, params object[] args);
+        void Info(string message, params object[] args);
+        void Debug(string message, params object[] args);
+        void Trace(string message, params object[] args);
     }
 
     public class SPLogger : ISPLogger
     {
         private readonly string _logFilePath;
-        private readonly LogLevel _minLogLevel;
+        private readonly ISPLogger.LogLevel _minLogLevel;
         private readonly long _maxFileSize;
+        //private readonly bool LogToConsole = false; // Toggle for console output
 
         // Constructor with optional parameters, including max file size for log rotation
-        public SPLogger(string logFilePath = "debuglog.log", LogLevel minLogLevel = LogLevel.Trace, long maxFileSize = 3 * 1024 * 1024) // 3 MB
+        public SPLogger(string logFilePath = "debuglog.log", ISPLogger.LogLevel minLogLevel = ISPLogger.LogLevel.Trace, long maxFileSize = 3 * 1024 * 1024) // 3 MB
         {
             _logFilePath = logFilePath;
             _minLogLevel = minLogLevel;
@@ -61,7 +64,7 @@ namespace SPLoggerLib
             }
         }
 
-        public void Log(string message, LogLevel level, params object[] args)
+        public void Log(ISPLogger.LogLevel level, string message, params object[] args)
         {
             if (level > _minLogLevel)
                 return;
@@ -83,11 +86,11 @@ namespace SPLoggerLib
             }
         }
 
-        public void LogFatal(string message, params object[] args) => Log(message, LogLevel.Fatal, args);
-        public void LogError(string message, params object[] args) => Log(message, LogLevel.Error, args);
-        public void LogWarn(string message, params object[] args) => Log(message, LogLevel.Warn, args);
-        public void LogInfo(string message, params object[] args) => Log(message, LogLevel.Info, args);
-        public void LogDebug(string message, params object[] args) => Log(message, LogLevel.Debug, args);
-        public void LogTrace(string message, params object[] args) => Log(message, LogLevel.Trace, args);
+        public void Fatal(string message, params object[] args) => Log(ISPLogger.LogLevel.Fatal, message, args);
+        public void Error(string message, params object[] args) => Log(ISPLogger.LogLevel.Error, message, args);
+        public void Warn(string message, params object[] args) => Log(ISPLogger.LogLevel.Warn, message, args);
+        public void Info(string message, params object[] args) => Log(ISPLogger.LogLevel.Info, message, args);
+        public void Debug(string message, params object[] args) => Log(ISPLogger.LogLevel.Debug, message, args);
+        public void Trace(string message, params object[] args) => Log(ISPLogger.LogLevel.Trace, message, args);
     }
 }

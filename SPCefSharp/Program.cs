@@ -30,25 +30,35 @@ namespace SPCefSharp.WinForms
 
         public static void InitLogger()
         {
-            ISPLogger logger = new SPLogger("app-log.txt", LogLevel.Debug, 3 * 1024 * 1024);
+            LogFileDir = AppDomain.CurrentDomain.BaseDirectory;
+            LogFileName = AppName + ".log";
+            LogFilePath = Path.Combine(LogFileDir, LogFileName);
+            // Log from main application
+            Logger.Debug("hello from application");
+        }
+
+        public static void InitCefSDK()
+        {
+            CefDirPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, CefDirName);
+
+            Random random = new Random();
+            int randomNumber = random.Next();
+            CefCacheFolder += randomNumber.ToString();
+            CefCacheFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), CefCacheFolder);
+            Logger.Info("Loading CEF from {0}", Globals.CefDirPath);
+
 
             // Log from class library
-            var consumer = new CEFSharpLib(logger);
+            var consumer = new CEFSharpLib(Logger.GetLoggerObject());
             consumer.LogInfoMessage();
-
-            // Log from main application
-            logger.LogDebug("hello from application");
-
         }
 
         public static void InitializeGlobals(string[] args) {
 
-
+            InitLogger();
 
             if (CmdArgsMaxCount < args.Length)
             {
-                LogFileDir = AppDomain.CurrentDomain.BaseDirectory;
-                LogFileName = AppName + ".log";
                 Logger.Error("Invalid no. of command line args {0}.", args.Length.ToString());
                 Environment.Exit(0); //0 is exit status
             }
@@ -58,19 +68,8 @@ namespace SPCefSharp.WinForms
                 CefDirName = args[0];
             }
 
-            CefDirPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, CefDirName);
-            LogFileDir = AppDomain.CurrentDomain.BaseDirectory;
-            LogFileName = AppName + "_" + CefDirName + ".log";
-            LogFilePath = Path.Combine(LogFileDir, LogFileName);
+            InitCefSDK();
 
-
-            InitLogger();
-
-            Random random = new Random();
-            int randomNumber = random.Next();
-            CefCacheFolder += randomNumber.ToString();
-            CefCacheFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), CefCacheFolder);
-            Logger.Info("Loading CEF from {0}", Globals.CefDirPath);
         }
     }
 

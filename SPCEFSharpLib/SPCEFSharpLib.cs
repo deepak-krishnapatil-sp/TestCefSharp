@@ -14,7 +14,7 @@ namespace SPCEFSharpLib
 
         public void LogInfoMessage()
         {
-            _logger.LogInfo("hello from {0}", "class lib");
+            _logger.Info("hello from {0}", "class lib");
         }
 
     }
