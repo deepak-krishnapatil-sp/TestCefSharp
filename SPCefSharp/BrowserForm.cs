@@ -3,6 +3,8 @@
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 using SPCefSharp.WinForms.Controls;
+using SPCEFSharpLib;
+using SPLoggerLib;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -20,7 +22,7 @@ namespace SPCefSharp.WinForms
     public partial class BrowserForm : Form
     {
         private string title = "CEF DynamicLoading : ";
-        private string urlToLoad = "https://www.google.com";
+        private string urlToLoad = "https://src-onboarding.identitysoon.com/passwordreset";
         // private string urlToLoad = "https://src-onboarding.identitysoon.com/r/default/flow-selection";
         private string generatedNonce = string.Empty;
 
@@ -31,9 +33,15 @@ namespace SPCefSharp.WinForms
         private Assembly? cefSharpWinFormsAssembly;
         private Assembly? cefSharpCoreAssembly;
 
+        SPCEFSharpLib.CEFSharpLib CefSharpLib;
+
+
         private BrowserForm()
         {
             InitializeComponent();
+
+            CefSharpLib = new CEFSharpLib(Logger.GetLoggerObject(),Globals.CefDirPath);
+            CefSharpLib.CloseFormEvent += CloseForm;
 
             title += Program.GetCefVersion();
             this.Text = title;
@@ -42,7 +50,7 @@ namespace SPCefSharp.WinForms
         }
 
         public static BrowserForm GetBrowserFormObject()
-        { 
+        {
             var browserObject = new BrowserForm();
 
             browserObject.InitChromiumWebBrowserObject();
@@ -60,11 +68,13 @@ namespace SPCefSharp.WinForms
             cefSharpAssembly = Assembly.LoadFrom(Path.Combine(Globals.CefDirPath, "CefSharp.dll"));
 
             // Create browser
-            browserType = cefSharpWinFormsAssembly.GetType("CefSharp.WinForms.ChromiumWebBrowser");
-            browser = Activator.CreateInstance(browserType);
+            browser = CefSharpLib.InitializeBrowser();
+            browserType = browser.GetType();
             Control browserControl = (Control)browser;
             browserControl.Dock = DockStyle.Fill;
             toolStripContainer.ContentPanel.Controls.Add(browserControl);
+
+            
 
             Logger.Info("Created ChromiumWebBrowser Instance successfully");
         }
@@ -127,13 +137,27 @@ namespace SPCefSharp.WinForms
                             "CefSharp.FrameLoadStartEventArgs",
                             nameof(OnFrameLoadStart));
 
-            AddEventHandler("FrameLoadEnd",
-                            "CefSharp.FrameLoadEndEventArgs",
-                            nameof(OnFrameLoadEnd));
 
-            AddEventHandler("JavascriptMessageReceived",
+            CefSharpLib.AddEventHandler("FrameLoadEnd",
+                            "CefSharp.FrameLoadEndEventArgs",
+                            "OnFrameLoadEnd");
+
+
+            CefSharpLib.AddEventHandler("JavascriptMessageReceived",
                             "CefSharp.JavascriptMessageReceivedEventArgs",
-                            nameof(OnJavascriptMessageReceived));
+                            "OnJavascriptMessageReceived");
+        }
+
+        private void CloseForm()
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => this.Close()));
+            }
+            else
+            {
+                this.Close();
+            }
         }
 
         private void ExitMenuItemClick(object sender, EventArgs e)
@@ -253,108 +277,6 @@ namespace SPCefSharp.WinForms
             return;
         }
 
-        private async void OnFrameLoadEnd(object sender, object args)
-        {
-            generatedNonce = generateNonce();
-            Logger.Info($"Generated Nonce: {generatedNonce}");
-
-            string nonceScript = $@"
-            (function() {{
-                let nonceElement = document.getElementById('dpr-pw-nonce');
-                if (nonceElement) {{
-                    nonceElement.value = '{generatedNonce}';
-                    nonceElement.dispatchEvent(new Event('click'));
-                }}
-            }})();";
-
-            bool isnonce = await ExecuteJavaScript(nonceScript);
-            if (isnonce)
-            {
-                Logger.Info("Nonce Injected Successfully!");
-            }
-            else
-            {
-                Logger.Info("Failed to Inject Nonce");
-            }
-
-            string successScript = @"
-            (function() {
-                const targetId = 'dpr-pw-success';
-                let lastContent = '';
-
-                const sendIfChanged = () => {
-                    const el = document.getElementById(targetId);
-                    if (el) {
-                        const content = el.innerText || el.value || '';
-                        if (content && content !== lastContent) {
-                            lastContent = content;
-                            CefSharp.PostMessage(content);
-                        }
-                    }
-                };
-
-                const observer = new MutationObserver(() => {
-                    sendIfChanged();
-                });
-
-                const startObserver = () => {
-                    const body = document.body;
-                    if (body) {
-                        observer.observe(body, {
-                            childList: true,
-                            subtree: true,
-                            characterData: true
-                        });
-                    }
-                };
-
-                // Run initially in case element already exists
-                setInterval(sendIfChanged, 1000);
-
-                // Start observing for DOM changes
-                startObserver();
-            })();
-            ";
-
-            await ExecuteJavaScript(successScript);
-        }
-
-        private void OnJavascriptMessageReceived(object sender, object args)
-        {
-            try
-            {
-                // Dynamically get the type of the args
-                Type argsType = args.GetType();
-
-                // Look for the 'Message' property
-                PropertyInfo messageProp = argsType.GetProperty("Message");
-
-                // Get the Message value
-                object? messageValue = messageProp.GetValue(args);
-                if (messageValue == null)
-                {
-                    Debug.WriteLine("Message value is null.");
-                    Logger.Error("Message value is null.");
-                    return;
-                }
-
-                // Get the message string (assumes it's a JS object or JSON string)
-                string jsonString = messageValue.ToString();
-                Logger.Info("Received JSON: " + jsonString);
-
-                if (string.IsNullOrWhiteSpace(jsonString))
-                {
-                    Logger.Error("Empty JSON received.");
-                    return;
-                }
-                ProcessSuccessData(jsonString);
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Exception in OnJavascriptMessageReceived: " + ex.ToString());
-            }
-        }
-
         private void AddEventHandler(string eventName, string eventArgsTypeStr, string eventHandlerFuncName)
         {
             //browser.AddressChanged += OnBrowserAddressChanged;
@@ -379,165 +301,10 @@ namespace SPCefSharp.WinForms
 
         }
 
-        private string generateNonce()
+        private void toolStripContainer_ContentPanel_Load(object sender, EventArgs e)
         {
-            byte[] nonceBytes = new byte[16];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(nonceBytes);
-            }
-            return BitConverter.ToString(nonceBytes).Replace("-", "").ToLower();
+
         }
-
-        private async Task<bool> ExecuteJavaScript(string script)
-        {
-            try
-            {
-                PropertyInfo browserCoreProperty = browserType.GetProperty("BrowserCore");
-                if (browserCoreProperty == null)
-                {
-                    Logger.Error("BrowserCore property not found on ChromiumWebBrowser.");
-                    return false;
-                }
-
-                object iBrowserInstance = browserCoreProperty.GetValue(browser);
-                if (iBrowserInstance == null)
-                {
-                    Logger.Error("Failed to get IBrowser instance from BrowserCore.");
-                    return false;
-                }
-
-                PropertyInfo mainFrameProperty = iBrowserInstance.GetType().GetProperty("MainFrame");
-                if (mainFrameProperty == null)
-                {
-                    Logger.Error("MainFrame property not found in IBrowser.");
-                    return false;
-                }
-
-                object iFrameInstance = mainFrameProperty.GetValue(iBrowserInstance);
-                if (iFrameInstance == null)
-                {
-                    Logger.Error("Failed to get IFrame instance.");
-                    return false;
-                }
-
-
-                MethodInfo evaluateScriptAsync = iFrameInstance.GetType().GetMethod(
-                    "EvaluateScriptAsync",
-                    new[]
-                    {
-                        typeof(string),        // script
-                        typeof(string),        // scriptUrl
-                        typeof(int),           // startLine
-                        typeof(TimeSpan?),     // timeout
-                        typeof(bool)           // useImmediatelyInvokedFunc
-                            
-                    });
-
-                if (evaluateScriptAsync == null)
-                {
-                    Logger.Error("EvaluateScriptAsync(string, string, int, TimeSpan?, bool) method not found in IFrame.");
-                    return false;
-                }
-
-                object task = evaluateScriptAsync.Invoke(iFrameInstance, new object[]
-                {
-                    script,
-                    "about:blank",               // scriptUrl (dummy)
-                    0,                           // startLine
-                    TimeSpan.FromSeconds(5),     // timeout
-                    true                         // useImmediatelyInvokedFunc
-                });
-
-                if (task is Task responseTask)
-                {
-                    await responseTask.ConfigureAwait(false);
-
-                    Type taskType = responseTask.GetType();
-                    if (taskType.IsGenericType && taskType.GetGenericTypeDefinition() == typeof(Task<>))
-                    {
-                        PropertyInfo resultProperty = taskType.GetProperty("Result");
-                        object result = resultProperty?.GetValue(responseTask);
-
-                        return true;
-                    }
-
-                    return true; // Non-generic Task completed fine
-                }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Logger.Error($"Error executing JavaScript: {ex.Message}");
-                return false;
-            }
-        }
-
-
-        private async void ProcessSuccessData(string jsonData)
-        {
-            try
-            {
-                var data = JsonSerializer.Deserialize<SuccessData>(jsonData);
-                if (data != null)
-                {
-
-                    // Debug: Log success data processing
-                    Logger.Info($"Processing success data for username: {data.Username}");
-
-                    bool isVerified = await VerifyNonce(data.VerificationUrl);
-                    if (isVerified)
-                    {
-
-                        // Debug: Log nonce verification success
-                        Logger.Info("Nonce verification successful.");
-                    }
-                    else
-                    {
-
-                        // Debug: Log nonce verification failure
-                        Logger.Info("Nonce verification failed.");
-                    }
-                    if (this.InvokeRequired)
-                    {
-                        this.Invoke(new Action(() => this.Close()));
-                    }
-                    else
-                    {
-                        this.Close();
-                    }
-                }
-            }
-            catch (JsonException ex)
-            {
-                Logger.Error("Error parsing JSON: " + ex.Message);
-            }
-        }
-
-        private async Task<bool> VerifyNonce(string url)
-        {
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    string fullUrl = $"https://src-onboarding.identitysoon.com{url}&nonce={Uri.EscapeDataString(generatedNonce)}";
-                    var response = await client.GetAsync(fullUrl);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var content = await response.Content.ReadAsStringAsync();
-                        var verificationData = JsonSerializer.Deserialize<VerificationResponse>(content);
-                        return verificationData != null && verificationData.Nonce == generatedNonce;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error($"Error during verification: {ex.Message}");
-            }
-            return false;
-        }
-
     }
 
     class SuccessData

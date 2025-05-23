@@ -33,6 +33,7 @@ namespace SPCefSharp.WinForms
             LogFileDir = AppDomain.CurrentDomain.BaseDirectory;
             LogFileName = AppName + ".log";
             LogFilePath = Path.Combine(LogFileDir, LogFileName);
+
             // Log from main application
             Logger.Debug("hello from application");
         }
@@ -40,6 +41,7 @@ namespace SPCefSharp.WinForms
         public static void InitCefSDK()
         {
             CefDirPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, CefDirName);
+
 
             Random random = new Random();
             int randomNumber = random.Next();
@@ -49,7 +51,7 @@ namespace SPCefSharp.WinForms
 
 
             // Log from class library
-            var consumer = new CEFSharpLib(Logger.GetLoggerObject());
+            var consumer = new CEFSharpLib(Logger.GetLoggerObject(),Globals.CefDirPath);
             consumer.LogInfoMessage();
         }
 
@@ -131,7 +133,6 @@ namespace SPCefSharp.WinForms
                 Globals.InitializeGlobals(args);
 
                 // Load assemblies
-
                 cefSharpCoreAssembly = Assembly.LoadFrom(Path.Combine(Globals.CefDirPath, "CefSharp.Core.dll"));
                 cefSharpWinFormsAssembly = Assembly.LoadFrom(Path.Combine(Globals.CefDirPath, "CefSharp.WinForms.dll"));
 
